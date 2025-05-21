@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "volt-parser"
-version = "0.1.0"
+version = "0.2.0"
 description = "CLI tool that extracts and enriches company data from Markdown notes and outputs structured JSON."
 authors = [
     {name = "Vitaly Chapyolkin", email = "vitaly.chapyolkin@gmail.com"}
@@ -19,6 +19,8 @@ dependencies = [
     "spacy-transformers>=1.2",
     "python-dotenv>=1.0",
     "rapidfuzz>=3.6",
+    "anthropic>=0.26",
+    "python-json-logger>=2.0",
 ]
 
 [project.scripts]
