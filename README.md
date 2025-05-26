@@ -10,7 +10,7 @@ pipelines or BI dashboards.
 ### 1. Clone the repo
 
 
-git clone https://github.com/<your-org>/volt_parser.git
+git clone https://github.com/Hiravi/volt_parser.git
 cd volt_parser
 
 ### 2. Create and activate a virtual-env (Python ≥ 3.9)
