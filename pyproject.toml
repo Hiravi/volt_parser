@@ -5,7 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "volt-parser"
 version = "0.2.0"
+<<<<<<< HEAD
 description = "CLI tool that extracts and enriches company data from Markdown notes and outputs structured JSON."
+=======
+description = "CLI that extracts companies from Markdown and enriches via WikiData/Wikipedia with optional Anthropic fallback."
+>>>>>>> my-feature
 authors = [
     {name = "Vitaly Chapyolkin", email = "vitaly.chapyolkin@gmail.com"}
 ]
@@ -17,11 +21,21 @@ dependencies = [
     "async-timeout>=4.0",
     "spacy>=3.7",
     "spacy-transformers>=1.2",
-    "python-dotenv>=1.0",
+    "tenacity>=8.2",
     "rapidfuzz>=3.6",
+<<<<<<< HEAD
     "anthropic>=0.26",
     "python-json-logger>=2.0",
+=======
+    "click>=8.1",
+    "pydantic>=2.7",
+    "jsonschema>=4.22",
+    "rich>=13.7",
+>>>>>>> my-feature
 ]
+
+[project.optional-dependencies]
+llm = ["anthropic>=0.7"]
 
 [project.scripts]
 volt-parser = "volt_parser.cli:main"
