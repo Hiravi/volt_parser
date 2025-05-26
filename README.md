@@ -35,4 +35,4 @@ export ANTHROPIC_API_KEY="sk-ant-api-key..."
 
 
 ## 🚀 Usage
-python -m volt_parser.cli note.md -o result.json --llm-fallback
+python -m volt-parser.cli note.md -o result.json --llm-fallback
