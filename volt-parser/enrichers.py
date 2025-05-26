@@ -1,30 +1,15 @@
 from __future__ import annotations
-
-
 import asyncio
-
 import json
-
 import logging
-
 import os
-
 from typing import Any, Dict, List, Optional
-
 from urllib.parse import quote_plus
-
-
 import aiohttp
-
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, RetryError
 from rich.console import Console
-
-
 from .cache import CACHE
-
 from .extractor import _normalize
-
 
 try:
 
@@ -141,19 +126,18 @@ def _wd_official_site(entity: Dict[str, Any]) -> Optional[str]:
     return claims["P856"][0]["mainsnak"]["datavalue"]["value"]
 
 
+def _wrap_names(names: List[str]) -> List[Dict[str, str]]:
+    """["Ada", "Bob"] → [{"name": "Ada"}, {"name": "Bob"}] (schema expects objects)."""
+    return [{"name": n} for n in names if n]
+
+
 # Wikipedia summary ----------------------------------------------------------
-
 async def _wiki_summary(session: aiohttp.ClientSession, title: str) -> str:
-
     url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{quote_plus(title)}"
-
     try:
-
         data = await _fetch_json(session, url)
-
         return data.get("extract", "")
-
-    except EnrichmentError:
+    except (EnrichmentError, RetryError):
 
         return ""
 
@@ -161,16 +145,11 @@ async def _wiki_summary(session: aiohttp.ClientSession, title: str) -> str:
 # Anthropic Web-Search Tool ----------------------------------
 
 async def _anthropic_web_search(company: str) -> Optional[Dict[str, Any]]:
-
-
-
     if not anthropic or not ANTHROPIC_KEY:
 
         return None
 
-
     client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
-
 
     tool_def = {
 
@@ -181,7 +160,6 @@ async def _anthropic_web_search(company: str) -> Optional[Dict[str, Any]]:
         "max_uses": 3,
 
     }
-
 
     prompt = (
         "You are a JSON-only extractor. "
@@ -202,7 +180,6 @@ async def _anthropic_web_search(company: str) -> Optional[Dict[str, Any]]:
         "If you break any of these rules the answer will be discarded."
     )
 
-
     try:
 
         resp = await asyncio.to_thread(
@@ -221,14 +198,11 @@ async def _anthropic_web_search(company: str) -> Optional[Dict[str, Any]]:
 
         )
 
-
         raw = "".join(p.text for p in resp.content if p.type == "text").strip()
 
         console.log(f"Claude text: {raw}")
 
-
         import re, json as _json
-
 
         m = re.search(r'\{.*?\}', raw, re.DOTALL)
 
@@ -237,7 +211,6 @@ async def _anthropic_web_search(company: str) -> Optional[Dict[str, Any]]:
             return None
 
         blob = m.group()
-
 
         try:
 
@@ -285,8 +258,6 @@ async def _anthropic_web_search(company: str) -> Optional[Dict[str, Any]]:
 
         }
 
-
-
     except Exception as exc:
 
         logging.warning("Anthropic web-search failed for %s: %s", company, exc)
@@ -297,8 +268,6 @@ async def _anthropic_web_search(company: str) -> Optional[Dict[str, Any]]:
 # Public API ----------------------------------------------------------------
 async def enrich_company(name: str, *, use_llm: bool = False) -> Dict[str, Any]:
     console.log(f"Starting enrichment for: '{name}' (LLM enabled: {use_llm})")
-
-   
 
     async with aiohttp.ClientSession() as session:
 
@@ -320,7 +289,6 @@ async def enrich_company(name: str, *, use_llm: bool = False) -> Dict[str, Any]:
 
                     console.log(f"Web search found data for '{name}'")
 
-
                     key_people: List[str] = []
                     if isinstance(web_data.get("key_people"), list):
                         for person in web_data["key_people"][:3]:
@@ -328,28 +296,22 @@ async def enrich_company(name: str, *, use_llm: bool = False) -> Dict[str, Any]:
                                 key_people.append(str(person["name"]))
                             elif isinstance(person, str):
                                 key_people.append(person.strip())
-
+                    
+                    competitors = [
+                        c.strip() for c in (web_data.get("competitors") or [])[:5]
+                        if isinstance(c, str) and c.strip()
+                    ]
                    
                     return {
-
                         "name": name,
-
                         "aliases": [],
-
                         "website": web_data.get("website", "Unknown"),
-
                         "sector": web_data.get("sector", "Unknown"),
-
                         "hq_location": web_data.get("hq_location", "Unknown"),
-
                         "description": web_data.get("description", "(found via web search)"),
-
-                        "key_people": key_people,
-
-                        "competitors": [],
-
+                        "key_people": _wrap_names(key_people),      # ← schema-compliant
+                        "competitors": _wrap_names(competitors),    # same trick – name objects
                         "sources": {"anthropic_web_search": "Anthropic Web Search Tool"},
-
                     }
 
                 else:
@@ -369,16 +331,11 @@ async def enrich_company(name: str, *, use_llm: bool = False) -> Dict[str, Any]:
 
         console.log(f"Found WikiData: {canonical} ({qid})")
 
-       
-
         entity = await _wd_entity(session, qid)
-
 
         description = await _wiki_summary(session, canonical) or hit.get("description", "")
 
         website = _wd_official_site(entity)
-
-       
 
         if not website and use_llm:
 
@@ -392,15 +349,11 @@ async def enrich_company(name: str, *, use_llm: bool = False) -> Dict[str, Any]:
 
                 console.log(f"Found website via web search: {website}")
 
-       
-
         website = website or f"https://www.wikidata.org/wiki/{qid}"
-
 
         sector = await _wd_first_claim_label(session, entity, "P452") or "Unknown"
 
         hq = await _wd_first_claim_label(session, entity, "P159") or "Unknown"
-
 
         key_people: List[str] = []
         for prop in ("P1037", "P112"):
@@ -410,6 +363,7 @@ async def enrich_company(name: str, *, use_llm: bool = False) -> Dict[str, Any]:
             if len(key_people) >= 3:
                 break
 
+        key_people_objs = _wrap_names(key_people)
 
         profile = {
 
@@ -425,7 +379,7 @@ async def enrich_company(name: str, *, use_llm: bool = False) -> Dict[str, Any]:
 
             "description": description,
 
-            "key_people": key_people,
+            "key_people": key_people_objs,
 
             "competitors": [],
 
@@ -438,7 +392,6 @@ async def enrich_company(name: str, *, use_llm: bool = False) -> Dict[str, Any]:
             },
 
         }
-
 
         console.log(f"Enriched '{name}' → '{canonical}' | website: {website}")
 
