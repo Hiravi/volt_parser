@@ -6,10 +6,10 @@ Outputs a single, schema-validated JSON file you can feed straight into downstre
 pipelines or BI dashboards.
 
 ## 🖇️ Quick-start
-
+```bash
 ### 1. Clone the repo
 
-```bash
+
 git clone https://github.com/<your-org>/volt_parser.git
 cd volt_parser
 
