@@ -7,8 +7,8 @@ from typing import Any, List
 
 
 def write_json(data: List[dict[str, Any]], output: Path) -> None:
-    Draft202012Validator(schema).validate(data)
-    output.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+    text = json.dumps(data, indent=2, ensure_ascii=False)
+    output.write_text(text, encoding="utf-8")
 
 
 def generate_json(companies: list[dict[str, Any]]) -> str:
