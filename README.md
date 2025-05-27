@@ -20,16 +20,18 @@ source .venv/bin/activate
 # Windows (PowerShell)
 .venv\Scripts\Activate.ps1
 
+### 3. Install spacy
+conda install -c conda-forge spacy=3.7.2
 
-### 3. Install the package
+### 4. Install the package
 pip install -e ".[llm]"
 
 
-### 4. Download the spaCy model
+### 5. Download the spaCy model
 python -m spacy download en_core_web_trf
 
 
-### 5. Set environment variables
+### 6. Set environment variables
 export ANTHROPIC_API_KEY="sk-ant-api-key..."
 (Windows CMD → set, PowerShell → $Env:ANTHROPIC_API_KEY="...")
 
