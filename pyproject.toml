@@ -1,3 +1,4 @@
+# pyproject.toml  ── merged
 [build-system]
 requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
@@ -5,17 +6,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "volt-parser"
 version = "0.2.0"
-<<<<<<< HEAD
-description = "CLI tool that extracts and enriches company data from Markdown notes and outputs structured JSON."
-=======
-description = "CLI that extracts companies from Markdown and enriches via WikiData/Wikipedia with optional Anthropic fallback."
->>>>>>> my-feature
+description = "CLI tool that extracts company names from Markdown/notes, enriches them via WikiData & Wikipedia (with optional Anthropic web-search fallback), and outputs schema-validated JSON."
 authors = [
-    {name = "Vitaly Chapyolkin", email = "vitaly.chapyolkin@gmail.com"}
+    { name = "Vitaly Chapyolkin", email = "vitaly.chapyolkin@gmail.com" }
 ]
 requires-python = ">=3.9"
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
+
 dependencies = [
     "aiohttp>=3.9",
     "async-timeout>=4.0",
@@ -23,19 +21,15 @@ dependencies = [
     "spacy-transformers>=1.2",
     "tenacity>=8.2",
     "rapidfuzz>=3.6",
-<<<<<<< HEAD
-    "anthropic>=0.26",
-    "python-json-logger>=2.0",
-=======
     "click>=8.1",
-    "pydantic>=2.7",
-    "jsonschema>=4.22",
     "rich>=13.7",
->>>>>>> my-feature
+    "jsonschema>=4.22",
+    "pydantic>=2.7",
+    "python-json-logger>=2.0",
 ]
 
 [project.optional-dependencies]
-llm = ["anthropic>=0.7"]
+llm = ["anthropic>=0.26"]
 
 [project.scripts]
 volt-parser = "volt_parser.cli:main"
