@@ -6,11 +6,11 @@ Outputs a single, schema-validated JSON file you can feed straight into downstre
 pipelines or BI dashboards.
 
 ## 🖇️ Quick-start
-
+```bash
 ### 1. Clone the repo
 
-```bash
-git clone https://github.com/<your-org>/volt_parser.git
+
+git clone https://github.com/Hiravi/volt_parser.git
 cd volt_parser
 
 ### 2. Create and activate a virtual-env (Python ≥ 3.9)
@@ -35,4 +35,4 @@ export ANTHROPIC_API_KEY="sk-ant-api-key..."
 
 
 ## 🚀 Usage
-python -m volt_parser.cli note.md -o result.json --llm-fallback
+python -m volt-parser.cli note.md -o result.json --llm-fallback
